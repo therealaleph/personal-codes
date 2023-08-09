@@ -39,6 +39,11 @@ echo.
 echo.
 echo.
 @echo off
+if exist sing-box.exe (
+    echo "sing-box.exe already exists, no need to download!"
+    echo.
+    goto :skipdownload
+)
 for /f %%i in ('powershell -Command "Invoke-WebRequest -Uri https://github.com/SagerNet/sing-box/releases/latest -UseBasicParsing | Select-Object -ExpandProperty BaseResponse | Select-Object -ExpandProperty ResponseUri | Select-Object -ExpandProperty AbsolutePath | Split-Path -Leaf"') do (
     set "version=%%~i"
 )
@@ -58,7 +63,31 @@ echo Cleaning up...
 powershell -Command "Remove-Item -Path '.\%unzipped_folder%' -Recurse -Force"
 powershell -Command "Remove-Item -Path '.\%output%' -Force"
 echo Clean up complete.
+:skipdownload
 @echo off
+if exist config.json (
+    echo config.json already exists!
+    powershell.exe -NoLogo -NoProfile -Command Write-Host 'Use the current config.json? Answer with y or n' -ForegroundColor Green -NoNewline
+    set /p choice=
+    
+    call :subroutine
+)
+goto:eof
+:subroutine
+    if /I "%choice%" EQU "y" (
+      echo You chose yes!
+      echo Using the existing config.json!
+      goto:oldfile
+    ) else (
+        if /I "%choice%" EQU "n" (
+          echo You chose no!
+          goto:newfile
+        ) else (
+          echo Invalid choice! Please answer with y or n.
+        )
+    )
+
+:newfile
 powershell.exe -NoLogo -NoProfile -Command Write-Host 'Please enter the subscription URL:' -ForegroundColor Green -NoNewline
 set /p url=""
 powershell.exe -Command "& {Invoke-WebRequest -Uri '%url%' -OutFile config.json}"
@@ -69,13 +98,14 @@ powershell -NoProfile -Command ^
     "(gc '%file%') -replace 'externalmobiel.lekdijk.online', '8.8.8.8' | Out-File -encoding ASCII '%file%'"
 
 endlocal
+:oldfile
 @echo off
 start sing-box.exe run
-ping -n 4 facebook.com > nul
-
+timeout /t 10 /nobreak >nul
+ping -n 4 facebook.com | find "TTL=" > nul
 if errorlevel 1 (
     echo.
-    echo Could not reach facebook.com, something is wrong!
+    echo Could not reach facebook.com, something is wrong, try again!
     echo.
 ) else (
     echo.
