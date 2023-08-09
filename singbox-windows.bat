@@ -71,6 +71,9 @@ if exist config.json (
     set /p choice=
     
     call :subroutine
+) else (
+    echo config.json does not exist!
+    goto:newfile
 )
 goto:eof
 :subroutine
