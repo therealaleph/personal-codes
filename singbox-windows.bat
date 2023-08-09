@@ -104,7 +104,7 @@ endlocal
 :oldfile
 @echo off
 start sing-box.exe run
-timeout /t 10 /nobreak >nul
+timeout /t 60 /nobreak >nul
 ping -n 4 facebook.com | find "TTL=" > nul
 if errorlevel 1 (
     echo.
